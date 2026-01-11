@@ -1,3 +1,9 @@
+[![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white&style=for-the-badge)](#) [![Linux](https://custom-icon-badges.demolab.com/badge/Linux-FCC624?logo=linux&logoColor=black&style=for-the-badge)](#) [![macOS](https://img.shields.io/badge/macOS-DEDEDE?logo=apple&logoColor=666666&style=for-the-badge)](#)
+
+[![Downloads](https://img.shields.io/github/downloads/mudrikam/Image-Tea-nano/total?style=for-the-badge&logo=github)](https://github.com/mudrikam/Image-Tea-nano/releases) [![Release](https://img.shields.io/github/v/release/mudrikam/Image-Tea-nano?style=for-the-badge&logo=github)](https://github.com/mudrikam/Image-Tea-nano/releases) ![WhatsApp Group](https://img.shields.io/badge/Join%20WhatsApp-Group-25D366?logo=whatsapp&style=for-the-badge&link=https://chat.whatsapp.com/CMQvDxpCfP647kBBA6dRn3)
+
+---
+
 # Image Tea Installer
 A simple installer for Image Tea (Windows, macOS, Linux).
 
@@ -56,4 +62,7 @@ A simple installer for Image Tea (Windows, macOS, Linux).
 
 ## Support
 - Releases & downloads: https://github.com/mudrikam/Image-Tea-nano/releases
-- Community: ![WhatsApp Group](https://img.shields.io/badge/Join%20WhatsApp-Group-25D366?logo=whatsapp&style=for-the-badge&link=https://chat.whatsapp.com/CMQvDxpCfP647kBBA6dRn3)
+![WhatsApp Group](https://img.shields.io/badge/Join%20WhatsApp-Group-25D366?logo=whatsapp&style=for-the-badge&link=https://chat.whatsapp.com/CMQvDxpCfP647kBBA6dRn3)
+
+## Note
+Please do not send direct/private messages (DM) to the developer or contributors. For any questions, suggestions, or issues, please ask in the WhatsApp community group so everyone can help together.
