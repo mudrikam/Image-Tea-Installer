@@ -59,24 +59,59 @@ def getch():
 def print_header(text):
     """Print styled header box"""
     width = 70
-    print(f"\n{Colors.CYAN}{Colors.BOLD}{'=' * width}{Colors.RESET}")
-    print(f"{Colors.CYAN}{Colors.BOLD}|{' ' * ((width - len(text) - 2) // 2)}{text}{' ' * ((width - len(text) - 1) // 2)}|{Colors.RESET}")
-    print(f"{Colors.CYAN}{Colors.BOLD}{'=' * width}{Colors.RESET}\n")
+    top = '╔' + '═' * (width - 2) + '╗'
+    middle = '║' + ' ' * ((width - len(text) - 2) // 2) + text + ' ' * ((width - len(text) - 1) // 2) + '║'
+    bottom = '╚' + '═' * (width - 2) + '╝'
+    print(f"\n{Colors.CYAN}{Colors.BOLD}{top}{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}{middle}{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}{bottom}{Colors.RESET}\n")
 
 
 def print_box(text, color=Colors.GREEN):
     """Print text in a colored box"""
-    width = 70
-    print(f"\n{color}{'=' * width}{Colors.RESET}")
-    print(f"{color}| {text}{' ' * (width - len(text) - 3)}|{Colors.RESET}")
-    print(f"{color}{'=' * width}{Colors.RESET}\n")
+    width = max(70, len(text) + 4)  # +4 for '║ ' and ' ║'
+    top = '╔' + '═' * (width - 2) + '╗'
+    # Ensure the inner content fills width-2 characters (one leading space + text + padding)
+    pad = width - len(text) - 3
+    middle = '║ ' + text + ' ' * pad + '║'
+    bottom = '╚' + '═' * (width - 2) + '╝'
+    print(f"\n{color}{top}{Colors.RESET}")
+    print(f"{color}{middle}{Colors.RESET}")
+    print(f"{color}{bottom}{Colors.RESET}\n")
+
+
+def print_multiline_box(title, lines, color=Colors.YELLOW):
+    """Print a box with a title and multiple lines inside"""
+    # Calculate width based on longest content
+    max_content = max(len(title), max((len(l) for l in lines), default=0))
+    width = max(70, max_content + 4)  # +4 for '║ ' and ' ║'
+    
+    top = '╔' + '═' * (width - 2) + '╗'
+    pad = width - len(title) - 3
+    title_line = '║ ' + title + ' ' * pad + '║'
+    middle_lines = []
+    for l in lines:
+        pad = width - len(l) - 3
+        middle_lines.append('║ ' + l + ' ' * pad + '║')
+    bottom = '╚' + '═' * (width - 2) + '╝'
+
+    print(f"\n{color}{top}{Colors.RESET}")
+    print(f"{color}{title_line}{Colors.RESET}")
+    for ml in middle_lines:
+        print(f"{color}{ml}{Colors.RESET}")
+    print(f"{color}{bottom}{Colors.RESET}\n")
 
 
 def print_section(title):
-    """Print section separator"""
-    print(f"\n{Colors.YELLOW}{'=' * 70}{Colors.RESET}")
-    print(f"{Colors.YELLOW}{title}{Colors.RESET}")
-    print(f"{Colors.YELLOW}{'=' * 70}{Colors.RESET}")
+    """Print section separator box"""
+    width = max(70, len(title) + 4)  # +4 for '│ ' and ' │'
+    top = '┌' + '─' * (width - 2) + '┐'
+    pad = width - len(title) - 3
+    middle = '│ ' + title + ' ' * pad + '│'
+    bottom = '└' + '─' * (width - 2) + '┘'
+    print(f"\n{Colors.YELLOW}{top}{Colors.RESET}")
+    print(f"{Colors.YELLOW}{middle}{Colors.RESET}")
+    print(f"{Colors.YELLOW}{bottom}{Colors.RESET}")
 
 
 def load_config():
@@ -117,11 +152,12 @@ def download_file(url, destination):
                 percent = min(int(downloaded / total_size * 100), 100)
                 bar_length = 50
                 filled = int(bar_length * percent / 100)
-                bar = '#' * filled + '-' * (bar_length - filled)
+                # Box-style progress: filled box '█', empty box '░'
+                bar = '█' * filled + '░' * (bar_length - filled)
                 mb_downloaded = downloaded / (1024 * 1024)
                 mb_total = total_size / (1024 * 1024)
                 
-                sys.stdout.write(f'\r{Colors.GREEN}[{bar}] {percent}% ({mb_downloaded:.1f}/{mb_total:.1f} MB){Colors.RESET}')
+                sys.stdout.write(f'\r{Colors.GREEN}[{bar}]{Colors.RESET} {percent}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)')
                 sys.stdout.flush()
                 
                 if downloaded >= total_size:
@@ -243,18 +279,15 @@ def main():
     download_path = script_dir / installation_file
     extract_dir = script_dir / "Image-Tea"
     
-    # Confirmation prompt
-    print(f"\n{Colors.YELLOW}{'=' * 70}{Colors.RESET}")
-    print(f"{Colors.YELLOW}Installation will:{Colors.RESET}")
-    print(f"  {Colors.CYAN}>{Colors.RESET} Download: {Colors.WHITE}{installation_file}{Colors.RESET}")
-    print(f"  {Colors.CYAN}>{Colors.RESET} Extract to: {Colors.WHITE}{extract_dir}{Colors.RESET}")
-    print(f"{Colors.YELLOW}{'=' * 70}{Colors.RESET}")
-    
-    print(f"\n{Colors.BOLD}Proceed with installation? [{Colors.GREEN}Y{Colors.RESET}{Colors.BOLD}/{Colors.RED}n{Colors.RESET}{Colors.BOLD}]:{Colors.RESET} ", end='', flush=True)
-    
+    # Confirmation prompt (boxed)
+    lines = [f"> Download: {installation_file}", f"> Extract to: {extract_dir}"]
+    print_multiline_box("INSTALLATION WILL:", lines, Colors.YELLOW)
+
+    print(f"{Colors.BOLD}Proceed with installation? [{Colors.GREEN}Y{Colors.RESET}{Colors.BOLD}/{Colors.RED}n{Colors.RESET}{Colors.BOLD}]:{Colors.RESET} ", end='', flush=True)
+
     response = getch()
     print(response)  # Echo the character
-    
+
     if response not in ['y', 'Y', '\r', '\n', '']:
         print(f"\n{Colors.RED}[!] Installation cancelled by user.{Colors.RESET}")
         return
