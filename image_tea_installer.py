@@ -42,6 +42,9 @@ class Colors:
     BG_WHITE = '\033[47m'
 
 
+INSTALLER_VERSION = "1.0.0"
+
+
 def getch():
     """Get single character input without Enter"""
     if sys.platform == 'win32':
@@ -346,25 +349,30 @@ def main():
     # Enable ANSI colors on Windows
     if sys.platform == 'win32':
         os.system('')
-    
-    print_header("IMAGE-TEA SETUP")
-    
-    # Load configuration
+
+    # Load configuration first so we can show the installer version in the header
     try:
         config = load_config()
         application_repo = config['application_repo']
         installation_file = config['installation_file']
+        installer_version = config.get('installer_version', INSTALLER_VERSION)
     except Exception as e:
+        # Print header with default version when config can't be loaded
+        print_header(f"IMAGE-TEA SETUP v{INSTALLER_VERSION}")
         lines = [f"[!] Error loading configuration: {e}"]
         print_frame("ERROR", lines, Colors.RED, 'double')
         input("Press Enter to exit...")
         return
+
+    # Now print header including detected installer version
+    print_header(f"IMAGE-TEA SETUP v{installer_version}")
     
     # Application info frame
     lines = [
         f"Application:  {application_repo.split('/')[-1]}",
         f"Repository:   {application_repo}",
-        f"Package:      {installation_file}"
+        f"Package:      {installation_file}",
+        f"Installer:    {installer_version}"
     ]
     print_frame("APPLICATION INFO", lines, Colors.CYAN, 'double')
     

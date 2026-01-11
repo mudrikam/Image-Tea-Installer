@@ -2,6 +2,7 @@
   "installer_repo": "https://github.com/mudrikam/Image-Tea-Installer",
   "application_repo": "https://github.com/mudrikam/Image-Tea-nano",
   "developer": "Desainia Studio",
+  "installer_version": "1.0.0",
   "installation_file": "Image-Tea-nano.zip",
   "python_embeds": {
     "version": "3.12.10",
