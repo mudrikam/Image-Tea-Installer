@@ -64,6 +64,7 @@ Installer sederhana untuk Image Tea (Windows, macOS, Linux).
 
 ## Dukungan
 - Rilis & unduhan: https://github.com/mudrikam/Image-Tea-nano/releases
+
 ![WhatsApp Group](https://img.shields.io/badge/Join%20WhatsApp-Group-25D366?logo=whatsapp&style=for-the-badge&link=https://chat.whatsapp.com/CMQvDxpCfP647kBBA6dRn3)
 
 ## Catatan Penting
