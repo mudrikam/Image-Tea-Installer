@@ -250,6 +250,55 @@ def extract_zip(zip_path, extract_to):
         return False
 
 
+def uninstall(extract_dir: Path) -> bool:
+    """Uninstall Image Tea with safety confirmations"""
+    if not extract_dir.exists():
+        print_frame("UNINSTALL", ["[!] Image Tea is not installed."], Colors.RED, 'single')
+        return False
+    
+    # Show warning frame
+    warning_lines = [
+        "WARNING: This will permanently delete:",
+        "",
+        f"Folder: {extract_dir.absolute()}",
+        "",
+        "All files and subdirectories will be removed.",
+        "This action CANNOT be undone!"
+    ]
+    print_frame("UNINSTALL WARNING", warning_lines, Colors.RED, 'double')
+    
+    # First confirmation
+    while True:
+        print(f"{Colors.BOLD}Are you sure you want to uninstall? [{Colors.RED}Y{Colors.RESET}/{Colors.GREEN}N{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
+        r1 = getch()
+        print(r1)
+        if r1 in ['n', 'N', '\r', '\n', '']:
+            print_frame("UNINSTALL", ["[+] Uninstall cancelled."], Colors.GREEN, 'single')
+            return False
+        if r1 in ['y', 'Y']:
+            break
+    
+    # Second confirmation
+    while True:
+        print(f"{Colors.BOLD}Final confirmation - Delete Image Tea folder? [{Colors.RED}Y{Colors.RESET}/{Colors.GREEN}N{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
+        r2 = getch()
+        print(r2)
+        if r2 in ['n', 'N', '\r', '\n', '']:
+            print_frame("UNINSTALL", ["[+] Uninstall cancelled."], Colors.GREEN, 'single')
+            return False
+        if r2 in ['y', 'Y']:
+            break
+    
+    # Perform uninstall
+    try:
+        shutil.rmtree(extract_dir)
+        print_frame("UNINSTALL", ["[+] Image Tea has been successfully uninstalled."], Colors.GREEN, 'double')
+        return True
+    except Exception as e:
+        print_frame("UNINSTALL", [f"[!] Error during uninstall: {e}"], Colors.RED, 'double')
+        return False
+
+
 def run_launcher(extract_dir: Path) -> bool:
     """Attempt to run the project's launcher depending on platform.
     Returns True if a launcher was found and launched, False otherwise."""
@@ -293,12 +342,12 @@ def run_launcher(extract_dir: Path) -> bool:
 
 
 def main():
-    """Main installer function with enhanced CLI interface"""
+    """Main setup function with enhanced CLI interface"""
     # Enable ANSI colors on Windows
     if sys.platform == 'win32':
         os.system('')
     
-    print_header("IMAGE-TEA INSTALLER")
+    print_header("IMAGE-TEA SETUP")
     
     # Load configuration
     try:
@@ -318,6 +367,50 @@ def main():
         f"Package:      {installation_file}"
     ]
     print_frame("APPLICATION INFO", lines, Colors.CYAN, 'double')
+    
+    # Prepare paths early for detection
+    script_dir = Path(__file__).parent
+    download_path = script_dir / installation_file
+    extract_dir = script_dir / "Image-Tea"
+    
+    # Check if already installed
+    if extract_dir.exists() and any(extract_dir.iterdir()):
+        lines = [
+            "Image Tea is already installed!",
+            "",
+            f"Location: {extract_dir.absolute()}",
+            "",
+            "Options:",
+            "  [L] Launch Image Tea now",
+            "  [R] Reinstall (download and setup again)",
+            "  [U] Uninstall (delete Image Tea folder)",
+            "  [X] Exit"
+        ]
+        print_frame("ALREADY INSTALLED", lines, Colors.GREEN, 'double')
+        
+        while True:
+            print(f"{Colors.BOLD}Choose option [{Colors.GREEN}L{Colors.RESET}/{Colors.YELLOW}R{Colors.RESET}/{Colors.RED}U{Colors.RESET}/{Colors.CYAN}X{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
+            choice = getch()
+            print(choice)
+            
+            if choice in ['l', 'L']:
+                launched = run_launcher(extract_dir)
+                if launched:
+                    print_frame("LAUNCH", ["[+] Launched Image Tea."], Colors.GREEN, 'single')
+                else:
+                    print_frame("LAUNCH", ["[!] Launcher not found or failed to start."], Colors.RED, 'single')
+                return
+            elif choice in ['r', 'R']:
+                print_frame("REINSTALL", ["[+] Proceeding with reinstall..."], Colors.YELLOW, 'single')
+                break  # Continue with normal setup process
+            elif choice in ['u', 'U']:
+                if uninstall(extract_dir):
+                    return
+                else:
+                    continue  # Return to options menu
+            elif choice in ['x', 'X', '\r', '\n', '']:
+                print_frame("EXIT", ["[+] Setup cancelled."], Colors.CYAN, 'single')
+                return
     
     # Get latest release
     try:
@@ -350,21 +443,16 @@ def main():
         input("Press Enter to exit...")
         return
     
-    # Prepare paths
-    script_dir = Path(__file__).parent
-    download_path = script_dir / installation_file
-    extract_dir = script_dir / "Image-Tea"
-    
 # Confirmation prompt (frame contains only the plan; prompt is outside)
     lines = [
         f"> Download: {installation_file}",
         f"> Extract to: {extract_dir}"
     ]
-    print_frame("INSTALLATION PLAN", lines, Colors.YELLOW, 'double')
+    print_frame("SETUP PLAN", lines, Colors.YELLOW, 'double')
 
     # Prompt outside frame, accept Y/N (uppercase shown) — instant keypress
     while True:
-        print(f"{Colors.BOLD}Proceed with installation? [{Colors.GREEN}Y{Colors.RESET}/{Colors.RED}N{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
+        print(f"{Colors.BOLD}Proceed with setup? [{Colors.GREEN}Y{Colors.RESET}/{Colors.RED}N{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
         response = getch()
         print(response)
         if response in ['y', 'Y', '\r', '\n', '']:
@@ -376,7 +464,7 @@ def main():
         # ignore other keys and loop again
 
     if not proceed:
-        lines = ["Installation cancelled by user."]
+        lines = ["Setup cancelled by user."]
         print_frame("CANCELLED", lines, Colors.RED, 'double')
         return
     
@@ -406,7 +494,7 @@ def main():
     
     # Success message
     lines = [
-        "INSTALLATION COMPLETED!",
+        "SETUP COMPLETED!",
         "",
         f"Application installed to: {extract_dir.absolute()}"
     ]
@@ -433,7 +521,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        lines = ["Installation cancelled by user."]
+        lines = ["Setup cancelled by user."]
         print_frame("CANCELLED", lines, Colors.RED, 'double')
         input(f"{Colors.DIM}Press Enter to exit...{Colors.RESET}")
     except Exception as e:
