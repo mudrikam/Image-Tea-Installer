@@ -139,8 +139,18 @@ def print_frame(title, content_lines, color=Colors.CYAN, style='double'):
 
 
 def load_config():
-    """Load configuration from installer_configs.json"""
-    config_path = Path(__file__).parent / "installer_configs.json"
+    """Load configuration from installer_configs.json
+
+    When packaged with PyInstaller using --onefile, data files are extracted
+    to a temporary folder accessible via sys._MEIPASS. Use that path when
+    available so the bundled config can be found at runtime.
+    """
+    base = getattr(sys, '_MEIPASS', None)
+    if base:
+        config_path = Path(base) / "installer_configs.json"
+    else:
+        config_path = Path(__file__).parent / "installer_configs.json"
+
     with open(config_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
