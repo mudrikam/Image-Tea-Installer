@@ -1,0 +1,58 @@
+name: Build Image Tea Installer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            output_name: Image_Tea_Installer.exe
+            build_command: pyinstaller --onefile --noupx --icon=image_tea.ico --name=Image_Tea_Installer image_tea_installer.py
+            artifact_name: Image-Tea-Installer-Windows
+          
+          - os: ubuntu-latest
+            output_name: Image_Tea_Installer
+            build_command: pyinstaller --onefile --noupx --name=Image_Tea_Installer image_tea_installer.py
+            artifact_name: Image-Tea-Installer-Linux
+          
+          - os: macos-latest
+            output_name: Image_Tea_Installer
+            build_command: pyinstaller --onefile --noupx --name=Image_Tea_Installer image_tea_installer.py
+            artifact_name: Image-Tea-Installer-macOS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build installer executable
+        run: ${{ matrix.build_command }}
+
+      - name: Verify build output
+        shell: bash
+        run: |
+          ls -lah dist/
+          echo "Build completed for ${{ matrix.os }}"
+
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.output_name }}
+          if-no-files-found: error
