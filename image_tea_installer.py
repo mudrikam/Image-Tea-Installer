@@ -6,6 +6,7 @@ import urllib.error
 import shutil
 import tempfile
 import sys
+import subprocess
 from pathlib import Path
 
 # Platform-specific imports for keypress detection
@@ -249,6 +250,48 @@ def extract_zip(zip_path, extract_to):
         return False
 
 
+def run_launcher(extract_dir: Path) -> bool:
+    """Attempt to run the project's launcher depending on platform.
+    Returns True if a launcher was found and launched, False otherwise."""
+    # Windows -> Launcher.bat
+    if sys.platform.startswith('win'):
+        launcher = extract_dir / 'Launcher.bat'
+        if not launcher.exists():
+            return False
+        try:
+            # Use shell to allow .bat to run properly
+            subprocess.Popen([str(launcher)], cwd=extract_dir, shell=True)
+            return True
+        except Exception:
+            return False
+
+    # macOS/Linux -> Launcher.sh (or executable 'Launcher')
+    else:
+        launcher_sh = extract_dir / 'Launcher.sh'
+        launcher_bin = extract_dir / 'Launcher'
+        target = None
+        if launcher_sh.exists():
+            target = launcher_sh
+        elif launcher_bin.exists():
+            target = launcher_bin
+
+        if not target:
+            return False
+
+        try:
+            # Ensure executable
+            try:
+                mode = target.stat().st_mode
+                if not (mode & 0o111):
+                    target.chmod(mode | 0o111)
+            except Exception:
+                pass
+            subprocess.Popen(['sh', str(target)], cwd=extract_dir)
+            return True
+        except Exception:
+            return False
+
+
 def main():
     """Main installer function with enhanced CLI interface"""
     # Enable ANSI colors on Windows
@@ -369,7 +412,21 @@ def main():
     ]
     print_frame("SUCCESS", lines, Colors.GREEN, 'double')
     
-    input(f"{Colors.DIM}Press Enter to exit...{Colors.RESET}")
+    # Prompt to run application now (outside frame)
+    while True:
+        print(f"{Colors.BOLD}Run Image Tea now? [{Colors.GREEN}Y{Colors.RESET}/{Colors.RED}N{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
+        r = getch()
+        print(r)
+        if r in ['y', 'Y', '\r', '\n', '']:
+            launched = run_launcher(extract_dir)
+            if launched:
+                print_frame("LAUNCH", ["[+] Launched Image Tea."], Colors.GREEN, 'single')
+            else:
+                print_frame("LAUNCH", ["[!] Launcher not found or failed to start."], Colors.RED, 'single')
+            break
+        if r in ['n', 'N']:
+            break
+        # otherwise loop until valid key pressed
 
 
 if __name__ == "__main__":
