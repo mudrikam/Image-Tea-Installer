@@ -387,7 +387,14 @@ def main():
     print_frame("APPLICATION INFO", lines, Colors.CYAN, 'double')
     
     # Prepare paths early for detection
-    script_dir = Path(__file__).parent
+    # When running as PyInstaller executable, use the exe location, not __file__ (which points to temp)
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable - use executable's directory
+        script_dir = Path(sys.executable).parent
+    else:
+        # Running as normal Python script
+        script_dir = Path(__file__).parent
+    
     download_path = script_dir / installation_file
     extract_dir = script_dir / "Image-Tea"
     
