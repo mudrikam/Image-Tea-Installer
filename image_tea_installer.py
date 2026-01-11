@@ -5,10 +5,7 @@ import urllib.request
 import urllib.error
 import shutil
 import tempfile
-import threading
-import queue
-import tkinter as tk
-from tkinter import ttk, messagebox
+import sys
 from pathlib import Path
 
 
@@ -37,23 +34,44 @@ def get_latest_release(repo_url):
 
 
 def download_file(url, destination):
-    """Download file from URL to destination"""
-    print(f"Downloading from: {url}")
-    print(f"Saving to: {destination}")
+    """Download file from URL to destination with progress indicator"""
+    print(f"\n{'=' * 60}")
+    print(f"Downloading: {url}")
+    print(f"Destination: {destination}")
+    print(f"{'=' * 60}")
     
     try:
-        urllib.request.urlretrieve(url, destination)
-        print("Download completed!")
+        def progress_hook(block_num, block_size, total_size):
+            if total_size > 0:
+                downloaded = block_num * block_size
+                percent = min(int(downloaded / total_size * 100), 100)
+                bar_length = 40
+                filled = int(bar_length * percent / 100)
+                bar = '█' * filled + '░' * (bar_length - filled)
+                mb_downloaded = downloaded / (1024 * 1024)
+                mb_total = total_size / (1024 * 1024)
+                
+                sys.stdout.write(f'\r[{bar}] {percent}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)')
+                sys.stdout.flush()
+                
+                if downloaded >= total_size:
+                    print()  # New line after completion
+        
+        urllib.request.urlretrieve(url, destination, progress_hook)
+        print("\n✓ Download completed!")
         return True
     except Exception as e:
-        print(f"Error downloading file: {e}")
+        print(f"\n✗ Error downloading file: {e}")
         return False
 
 
 def extract_zip(zip_path, extract_to):
     """Extract zip file to specified directory, placing contents directly into extract_to
     (if the zip contains a single top-level directory, its children are moved up)."""
-    print(f"Extracting {zip_path} to {extract_to}")
+    print(f"\n{'=' * 60}")
+    print(f"Extracting: {zip_path}")
+    print(f"To: {extract_to}")
+    print(f"{'=' * 60}")
     
     try:
         # Ensure target directory exists
@@ -61,11 +79,15 @@ def extract_zip(zip_path, extract_to):
 
         with tempfile.TemporaryDirectory(dir=extract_to.parent) as tmpdir:
             tmp_path = Path(tmpdir)
+            
+            print("Extracting archive...", end='', flush=True)
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(tmp_path)
+            print(" ✓")
 
             entries = list(tmp_path.iterdir())
 
+            print("Moving files...", end='', flush=True)
             # If the archive contains a single top-level directory, move its children up
             if len(entries) == 1 and entries[0].is_dir():
                 source = entries[0]
@@ -87,43 +109,62 @@ def extract_zip(zip_path, extract_to):
                         else:
                             dest.unlink()
                     shutil.move(str(item), str(dest))
+            print(" ✓")
 
-        print("Extraction completed!")
+        print("\n✓ Extraction completed!")
         return True
     except Exception as e:
-        print(f"Error extracting file: {e}")
+        print(f"\n✗ Error extracting file: {e}")
         return False
 
 
-def cli_main():
-    print("=" * 60)
-    print("Image-Tea Installer")
-    print("=" * 60)
+def main():
+    """Main installer function with enhanced CLI interface"""
+    print("\n" + "╔" + "═" * 58 + "╗")
+    print("║" + " " * 15 + "IMAGE-TEA INSTALLER" + " " * 24 + "║")
+    print("╚" + "═" * 58 + "╝")
     
     # Load configuration
-    config = load_config()
-    application_repo = config['application_repo']
-    installation_file = config['installation_file']
+    try:
+        config = load_config()
+        application_repo = config['application_repo']
+        installation_file = config['installation_file']
+    except Exception as e:
+        print(f"\n✗ Error loading configuration: {e}")
+        input("\nPress Enter to exit...")
+        return
     
-    print(f"\nApplication Repository: {application_repo}")
-    print(f"Installation File: {installation_file}")
+    print(f"\n📦 Application: {application_repo.split('/')[-1]}")
+    print(f"🔗 Repository:  {application_repo}")
+    print(f"📄 Package:     {installation_file}")
     
     # Get latest release
-    print("\nFetching latest release information...")
-    release_info = get_latest_release(application_repo)
+    print(f"\n{'=' * 60}")
+    print("Fetching latest release information...")
+    print(f"{'=' * 60}")
     
-    print(f"Latest Release: {release_info['tag_name']}")
-    print(f"Release Name: {release_info['name']}")
+    try:
+        release_info = get_latest_release(application_repo)
+        print(f"\n✓ Found release: {release_info['tag_name']}")
+        print(f"  Name: {release_info['name']}")
+        print(f"  Published: {release_info.get('published_at', 'N/A')}")
+    except Exception as e:
+        print(f"\n✗ Error fetching release information: {e}")
+        input("\nPress Enter to exit...")
+        return
     
     # Find the installation file in assets
     download_url = None
     for asset in release_info['assets']:
         if asset['name'] == installation_file:
             download_url = asset['browser_download_url']
+            file_size = asset.get('size', 0)
+            print(f"  Size: {file_size / (1024 * 1024):.2f} MB")
             break
     
     if not download_url:
-        print(f"\nError: {installation_file} not found in latest release assets!")
+        print(f"\n✗ Error: {installation_file} not found in latest release assets!")
+        input("\nPress Enter to exit...")
         return
     
     # Prepare paths
@@ -131,236 +172,58 @@ def cli_main():
     download_path = script_dir / installation_file
     extract_dir = script_dir / "Image-Tea"
     
+    # Confirmation prompt
+    print(f"\n{'=' * 60}")
+    print("Installation will:")
+    print(f"  • Download: {installation_file}")
+    print(f"  • Extract to: {extract_dir}")
+    print(f"{'=' * 60}")
+    
+    response = input("\nProceed with installation? [Y/n]: ").strip().lower()
+    if response and response != 'y' and response != 'yes':
+        print("\n✗ Installation cancelled by user.")
+        return
+    
     # Create extract directory if it doesn't exist
     extract_dir.mkdir(exist_ok=True)
     
     # Download the file
-    print("\n" + "=" * 60)
     if not download_file(download_url, download_path):
+        input("\nPress Enter to exit...")
         return
     
     # Extract the file
-    print("\n" + "=" * 60)
-    if extract_zip(download_path, extract_dir):
-        print("\n" + "=" * 60)
-        print("Installation completed successfully!")
-        print(f"Application installed to: {extract_dir}")
-        print("=" * 60)
-        
-        # Remove the zip file after successful extraction
-        try:
-            if download_path.exists():
-                download_path.unlink()
-                print(f"Removed downloaded archive: {download_path}")
-        except Exception as e:
-            print(f"Warning: failed to remove downloaded archive: {e}")
+    if not extract_zip(download_path, extract_dir):
+        input("\nPress Enter to exit...")
+        return
     
-
-def download_file_with_progress(url, destination, progress_callback=None, cancel_event=None):
-    """Download file with progress callback. progress_callback(percent)"""
-    print(f"Downloading from: {url}")
-    print(f"Saving to: {destination}")
-
+    # Remove the zip file after successful extraction
+    print(f"\n{'=' * 60}")
+    print("Cleaning up...")
+    print(f"{'=' * 60}")
     try:
-        def reporthook(blocknum, blocksize, totalsize):
-            if cancel_event and cancel_event.is_set():
-                raise Exception("Download cancelled")
-            if totalsize > 0:
-                downloaded = blocknum * blocksize
-                percent = min(downloaded / totalsize * 100, 100)
-                if progress_callback:
-                    progress_callback(percent)
-
-        urllib.request.urlretrieve(url, destination, reporthook)
-        if progress_callback:
-            progress_callback(100)
-        print("Download completed!")
-        return True
+        if download_path.exists():
+            download_path.unlink()
+            print(f"✓ Removed: {download_path.name}")
     except Exception as e:
-        print(f"Error downloading file: {e}")
-        try:
-            if destination.exists():
-                destination.unlink()
-        except Exception:
-            pass
-        return False
-
-
-def run_install_worker(config, q, cancel_event):
-    """Background worker that downloads and extracts the installation zip and reports status to queue q"""
-    try:
-        application_repo = config['application_repo']
-        installation_file = config['installation_file']
-
-        q.put(('status', 'Fetching latest release...'))
-        release_info = get_latest_release(application_repo)
-
-        q.put(('info', {'tag': release_info.get('tag_name'), 'name': release_info.get('name')}))
-
-        # Find asset
-        download_url = None
-        for asset in release_info.get('assets', []):
-            if asset.get('name') == installation_file:
-                download_url = asset.get('browser_download_url')
-                break
-
-        if not download_url:
-            q.put(('error', f"{installation_file} not found in latest release assets"))
-            return
-
-        script_dir = Path(__file__).parent
-        download_path = script_dir / installation_file
-        extract_dir = script_dir / "Image-Tea"
-        extract_dir.mkdir(exist_ok=True)
-
-        q.put(('status', 'Downloading...'))
-
-        def progress_cb(pct):
-            q.put(('progress', pct))
-
-        if not download_file_with_progress(download_url, download_path, progress_cb, cancel_event):
-            if cancel_event.is_set():
-                q.put(('status', 'Cancelled'))
-            else:
-                q.put(('error', 'Download failed'))
-            return
-
-        if cancel_event.is_set():
-            q.put(('status', 'Cancelled'))
-            return
-
-        q.put(('status', 'Extracting...'))
-        if not extract_zip(download_path, extract_dir):
-            q.put(('error', 'Extraction failed'))
-            return
-
-        # Remove the downloaded archive
-        try:
-            if download_path.exists():
-                download_path.unlink()
-        except Exception:
-            pass
-
-        q.put(('progress', 100))
-        q.put(('status', 'Installation completed successfully'))
-        q.put(('done', None))
-    except Exception as e:
-        q.put(('error', str(e)))
-
-
-def launch_gui():
-    root = tk.Tk()
-    root.title('Download and Install Image Tea')
-
-    cfg = load_config()
-
-    frm = ttk.Frame(root, padding=12)
-    frm.grid(row=0, column=0, sticky='nsew')
-
-    ttk.Label(frm, text='Repository:').grid(row=0, column=0, sticky='w')
-    repo_lbl = ttk.Label(frm, text=cfg['application_repo'])
-    repo_lbl.grid(row=0, column=1, sticky='w')
-
-    ttk.Label(frm, text='Installation File:').grid(row=1, column=0, sticky='w')
-    file_lbl = ttk.Label(frm, text=cfg['installation_file'])
-    file_lbl.grid(row=1, column=1, sticky='w')
-
-    ttk.Label(frm, text='Release:').grid(row=2, column=0, sticky='w')
-    release_lbl = ttk.Label(frm, text='-')
-    release_lbl.grid(row=2, column=1, sticky='w')
-
-    progress = ttk.Progressbar(frm, orient='horizontal', length=360, mode='determinate', maximum=100)
-    progress.grid(row=3, column=0, columnspan=2, pady=(10, 0))
-
-    status_lbl = ttk.Label(frm, text='Idle')
-    status_lbl.grid(row=4, column=0, columnspan=2, sticky='w', pady=(6, 0))
-
-    # Make column 1 expand so controls on the right can align
-    frm.columnconfigure(1, weight=1)
-
-    btn_frame = ttk.Frame(frm)
-    btn_frame.grid(row=5, column=1, sticky='e', pady=(10, 0))
-
-    start_btn = ttk.Button(btn_frame, text='Start')
-    start_btn.grid(row=0, column=0, padx=(0, 6))
-    cancel_btn = ttk.Button(btn_frame, text='Cancel')
-    cancel_btn.grid(row=0, column=1)
-
-    q = queue.Queue()
-    cancel_event = threading.Event()
-    worker_thread = {'t': None}
-
-    def on_start():
-        start_btn.config(state='disabled')
-        cancel_btn.config(state='normal')
-        progress['value'] = 0
-        status_lbl.config(text='Starting...')
-        cancel_event.clear()
-        worker = threading.Thread(target=run_install_worker, args=(cfg, q, cancel_event), daemon=True)
-        worker_thread['t'] = worker
-        worker.start()
-        root.after(100, poll_queue)
-
-    def on_cancel():
-        cancel_event.set()
-        status_lbl.config(text='Cancelling...')
-
-    def poll_queue():
-        try:
-            while True:
-                msg, val = q.get_nowait()
-                if msg == 'progress':
-                    progress['value'] = val
-                elif msg == 'status':
-                    status_lbl.config(text=val)
-                elif msg == 'info':
-                    release_lbl.config(text=f"{val.get('tag')} - {val.get('name')}")
-                elif msg == 'error':
-                    messagebox.showerror('Error', val)
-                    start_btn.config(state='normal')
-                    cancel_btn.config(state='disabled')
-                elif msg == 'done':
-                    messagebox.showinfo('Done', 'Installation completed successfully')
-                    start_btn.config(state='normal')
-                    cancel_btn.config(state='disabled')
-        except queue.Empty:
-            # no messages
-            pass
-        # if worker still alive, continue polling
-        t = worker_thread.get('t')
-        if t and t.is_alive():
-            root.after(100, poll_queue)
-        else:
-            start_btn.config(state='normal')
-            cancel_btn.config(state='disabled')
-
-    start_btn.config(command=on_start)
-    cancel_btn.config(command=on_cancel)
-    cancel_btn.config(state='disabled')
-
-    root.protocol('WM_DELETE_WINDOW', lambda: (cancel_event.set(), root.destroy()))
-
-    # Center window on screen at first display
-    try:
-        root.update_idletasks()
-        w = root.winfo_width()
-        h = root.winfo_height()
-        ws = root.winfo_screenwidth()
-        hs = root.winfo_screenheight()
-        x = (ws - w) // 2
-        y = (hs - h) // 2
-        root.geometry(f"{w}x{h}+{x}+{y}")
-    except Exception:
-        # If centering fails for any reason, proceed without failing
-        pass
-
-    root.mainloop()
+        print(f"⚠ Warning: Could not remove archive: {e}")
+    
+    # Success message
+    print(f"\n{'╔' + '═' * 58 + '╗'}")
+    print(f"{'║' + ' ' * 12 + '✓ INSTALLATION COMPLETED!' + ' ' * 21 + '║'}")
+    print(f"{'╚' + '═' * 58 + '╝'}")
+    print(f"\n📁 Application installed to: {extract_dir.absolute()}")
+    print(f"\n{'=' * 60}")
+    
+    input("\nPress Enter to exit...")
 
 
 if __name__ == "__main__":
     try:
-        launch_gui()
+        main()
     except KeyboardInterrupt:
-        print("\n\nInstallation cancelled by user.")
+        print("\n\n✗ Installation cancelled by user.")
+        input("\nPress Enter to exit...")
     except Exception as e:
-        print(f"\n\nAn error occurred: {e}")
+        print(f"\n\n✗ An error occurred: {e}")
+        input("\nPress Enter to exit...")
