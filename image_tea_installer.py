@@ -64,54 +64,74 @@ def print_header(text):
     bottom = '╚' + '═' * (width - 2) + '╝'
     print(f"\n{Colors.CYAN}{Colors.BOLD}{top}{Colors.RESET}")
     print(f"{Colors.CYAN}{Colors.BOLD}{middle}{Colors.RESET}")
-    print(f"{Colors.CYAN}{Colors.BOLD}{bottom}{Colors.RESET}\n")
+    print(f"{Colors.CYAN}{Colors.BOLD}{bottom}{Colors.RESET}")
 
 
-def print_box(text, color=Colors.GREEN):
-    """Print text in a colored box"""
-    width = max(70, len(text) + 4)  # +4 for '║ ' and ' ║'
-    top = '╔' + '═' * (width - 2) + '╗'
-    # Ensure the inner content fills width-2 characters (one leading space + text + padding)
-    pad = width - len(text) - 3
-    middle = '║ ' + text + ' ' * pad + '║'
-    bottom = '╚' + '═' * (width - 2) + '╝'
-    print(f"\n{color}{top}{Colors.RESET}")
-    print(f"{color}{middle}{Colors.RESET}")
-    print(f"{color}{bottom}{Colors.RESET}\n")
+def truncate_middle(s: str, maxlen: int) -> str:
+    """Truncate string in the middle with '...' so total length <= maxlen."""
+    if len(s) <= maxlen:
+        return s
+    if maxlen <= 3:
+        return s[:maxlen]
+    # split remaining length evenly
+    rem = maxlen - 3
+    left = rem // 2
+    right = rem - left
+    return s[:left] + '...' + s[-right:]
 
 
-def print_multiline_box(title, lines, color=Colors.YELLOW):
-    """Print a box with a title and multiple lines inside"""
-    # Calculate width based on longest content
-    max_content = max(len(title), max((len(l) for l in lines), default=0))
-    width = max(70, max_content + 4)  # +4 for '║ ' and ' ║'
-    
-    top = '╔' + '═' * (width - 2) + '╗'
-    pad = width - len(title) - 3
-    title_line = '║ ' + title + ' ' * pad + '║'
-    middle_lines = []
-    for l in lines:
-        pad = width - len(l) - 3
-        middle_lines.append('║ ' + l + ' ' * pad + '║')
-    bottom = '╚' + '═' * (width - 2) + '╝'
+def print_frame(title, content_lines, color=Colors.CYAN, style='double'):
+    """
+    Generic frame printer
+    title: Frame title (can be empty string for no title)
+    content_lines: List of strings to display inside frame
+    color: ANSI color code
+    style: 'double' (╔═╗) or 'single' (┌─┐)
+    """
+    if not content_lines:
+        return
 
-    print(f"\n{color}{top}{Colors.RESET}")
-    print(f"{color}{title_line}{Colors.RESET}")
-    for ml in middle_lines:
-        print(f"{color}{ml}{Colors.RESET}")
-    print(f"{color}{bottom}{Colors.RESET}\n")
+    # Choose border characters
+    if style == 'double':
+        tl, tr, bl, br, h, v = '╔', '╗', '╚', '╝', '═', '║'
+    else:
+        tl, tr, bl, br, h, v = '┌', '┐', '└', '┘', '─', '│'
 
+    # Maximum inner content width (inner chars excluding borders)
+    MAX_INNER = 66  # total width - 4 for borders and padding
 
-def print_section(title):
-    """Print section separator box"""
-    width = max(70, len(title) + 4)  # +4 for '│ ' and ' │'
-    top = '┌' + '─' * (width - 2) + '┐'
-    pad = width - len(title) - 3
-    middle = '│ ' + title + ' ' * pad + '│'
-    bottom = '└' + '─' * (width - 2) + '┘'
-    print(f"\n{Colors.YELLOW}{top}{Colors.RESET}")
-    print(f"{Colors.YELLOW}{middle}{Colors.RESET}")
-    print(f"{Colors.YELLOW}{bottom}{Colors.RESET}")
+    # Truncate long lines to keep frames compact
+    processed = []
+    for line in ([title] if title else []) + content_lines:
+        processed.append(truncate_middle(line, MAX_INNER))
+
+    all_lines = processed
+    max_len = max(len(line) for line in all_lines)
+    width = max(70, max_len + 4)
+
+    # Build frame
+    top = tl + h * (width - 2) + tr
+    lines_output = []
+
+    if title:
+        tline = processed[0]
+        pad = width - len(tline) - 3
+        lines_output.append(v + ' ' + tline + ' ' * pad + v)
+        content_start = 1
+    else:
+        content_start = 0
+
+    for line in processed[content_start:]:
+        pad = width - len(line) - 3
+        lines_output.append(v + ' ' + line + ' ' * pad + v)
+
+    bottom = bl + h * (width - 2) + br
+
+    # Print frame
+    print(f"{color}{top}{Colors.RESET}")
+    for line in lines_output:
+        print(f"{color}{line}{Colors.RESET}")
+    print(f"{color}{bottom}{Colors.RESET}")
 
 
 def load_config():
@@ -140,10 +160,12 @@ def get_latest_release(repo_url):
 
 def download_file(url, destination):
     """Download file from URL to destination with progress indicator"""
-    print_section("DOWNLOADING")
-    print(f"{Colors.CYAN}URL:         {Colors.WHITE}{url}{Colors.RESET}")
-    print(f"{Colors.CYAN}Destination: {Colors.WHITE}{destination}{Colors.RESET}")
-    print()
+    lines = [
+        f"URL:         {url}",
+        f"Destination: {destination}",
+        ""
+    ]
+    print_frame("DOWNLOADING", lines, Colors.YELLOW, 'single')
     
     try:
         def progress_hook(block_num, block_size, total_size):
@@ -152,7 +174,6 @@ def download_file(url, destination):
                 percent = min(int(downloaded / total_size * 100), 100)
                 bar_length = 50
                 filled = int(bar_length * percent / 100)
-                # Box-style progress: filled box '█', empty box '░'
                 bar = '█' * filled + '░' * (bar_length - filled)
                 mb_downloaded = downloaded / (1024 * 1024)
                 mb_total = total_size / (1024 * 1024)
@@ -164,20 +185,23 @@ def download_file(url, destination):
                     print()
         
         urllib.request.urlretrieve(url, destination, progress_hook)
-        print(f"\n{Colors.GREEN}[+] Download completed!{Colors.RESET}")
+        # Show completion inside a small frame
+        print_frame("DOWNLOAD", ["[+] Download completed!"], Colors.GREEN, 'single')
         return True
     except Exception as e:
-        print(f"\n{Colors.RED}[!] Error downloading file: {e}{Colors.RESET}")
+        print_frame("DOWNLOAD", [f"[!] Error downloading file: {e}"], Colors.RED, 'single')
         return False
 
 
 def extract_zip(zip_path, extract_to):
     """Extract zip file to specified directory, placing contents directly into extract_to
     (if the zip contains a single top-level directory, its children are moved up)."""
-    print_section("EXTRACTING")
-    print(f"{Colors.CYAN}Archive: {Colors.WHITE}{zip_path}{Colors.RESET}")
-    print(f"{Colors.CYAN}Target:  {Colors.WHITE}{extract_to}{Colors.RESET}")
-    print()
+    lines = [
+        f"Archive: {zip_path}",
+        f"Target:  {extract_to}",
+        ""
+    ]
+    print_frame("EXTRACTING", lines, Colors.YELLOW, 'single')
     
     try:
         # Ensure target directory exists
@@ -186,14 +210,10 @@ def extract_zip(zip_path, extract_to):
         with tempfile.TemporaryDirectory(dir=extract_to.parent) as tmpdir:
             tmp_path = Path(tmpdir)
             
-            print(f"{Colors.YELLOW}[*] Extracting archive...{Colors.RESET}", end='', flush=True)
+
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(tmp_path)
-            print(f"\r{Colors.GREEN}[+] Extracting archive... Done{Colors.RESET}")
-
             entries = list(tmp_path.iterdir())
-
-            print(f"{Colors.YELLOW}[*] Moving files...{Colors.RESET}", end='', flush=True)
             # If the archive contains a single top-level directory, move its children up
             if len(entries) == 1 and entries[0].is_dir():
                 source = entries[0]
@@ -215,12 +235,17 @@ def extract_zip(zip_path, extract_to):
                         else:
                             dest.unlink()
                     shutil.move(str(item), str(dest))
-            print(f"\r{Colors.GREEN}[+] Moving files... Done     {Colors.RESET}")
 
-        print(f"\n{Colors.GREEN}[+] Extraction completed!{Colors.RESET}")
+        # Show extraction status inside a frame
+        status_lines = [
+            "[+] Extracting archive... Done",
+            "[+] Moving files... Done",
+            "[+] Extraction completed!"
+        ]
+        print_frame("EXTRACTING STATUS", status_lines, Colors.GREEN, 'single')
         return True
     except Exception as e:
-        print(f"\n{Colors.RED}[!] Error extracting file: {e}{Colors.RESET}")
+        print_frame("EXTRACTING STATUS", [f"[!] Error extracting file: {e}"], Colors.RED, 'single')
         return False
 
 
@@ -238,26 +263,31 @@ def main():
         application_repo = config['application_repo']
         installation_file = config['installation_file']
     except Exception as e:
-        print(f"{Colors.RED}[!] Error loading configuration: {e}{Colors.RESET}")
-        input("\nPress Enter to exit...")
+        lines = [f"[!] Error loading configuration: {e}"]
+        print_frame("ERROR", lines, Colors.RED, 'double')
+        input("Press Enter to exit...")
         return
     
-    print(f"{Colors.CYAN}Application:{Colors.RESET}  {Colors.WHITE}{application_repo.split('/')[-1]}{Colors.RESET}")
-    print(f"{Colors.CYAN}Repository:{Colors.RESET}   {Colors.WHITE}{application_repo}{Colors.RESET}")
-    print(f"{Colors.CYAN}Package:{Colors.RESET}      {Colors.WHITE}{installation_file}{Colors.RESET}")
+    # Application info frame
+    lines = [
+        f"Application:  {application_repo.split('/')[-1]}",
+        f"Repository:   {application_repo}",
+        f"Package:      {installation_file}"
+    ]
+    print_frame("APPLICATION INFO", lines, Colors.CYAN, 'double')
     
     # Get latest release
-    print_section("FETCHING RELEASE INFORMATION")
-    
     try:
         release_info = get_latest_release(application_repo)
-        print(f"{Colors.GREEN}[+] Found release:{Colors.RESET}")
-        print(f"    {Colors.CYAN}Version:{Colors.RESET}   {Colors.WHITE}{release_info['tag_name']}{Colors.RESET}")
-        print(f"    {Colors.CYAN}Name:{Colors.RESET}      {Colors.WHITE}{release_info['name']}{Colors.RESET}")
-        print(f"    {Colors.CYAN}Published:{Colors.RESET} {Colors.WHITE}{release_info.get('published_at', 'N/A')}{Colors.RESET}")
+        lines = [
+            f"Version:   {release_info['tag_name']}",
+            f"Name:      {release_info['name']}",
+            f"Published: {release_info.get('published_at', 'N/A')}"
+        ]
     except Exception as e:
-        print(f"{Colors.RED}[!] Error fetching release information: {e}{Colors.RESET}")
-        input("\nPress Enter to exit...")
+        lines = [f"[!] Error fetching release information: {e}"]
+        print_frame("ERROR", lines, Colors.RED, 'double')
+        input("Press Enter to exit...")
         return
     
     # Find the installation file in assets
@@ -266,12 +296,15 @@ def main():
         if asset['name'] == installation_file:
             download_url = asset['browser_download_url']
             file_size = asset.get('size', 0)
-            print(f"    {Colors.CYAN}Size:{Colors.RESET}      {Colors.WHITE}{file_size / (1024 * 1024):.2f} MB{Colors.RESET}")
+            lines.append(f"Size:      {file_size / (1024 * 1024):.2f} MB")
             break
     
+    print_frame("RELEASE INFO", lines, Colors.GREEN, 'double')
+    
     if not download_url:
-        print(f"{Colors.RED}[!] Error: {installation_file} not found in latest release assets!{Colors.RESET}")
-        input("\nPress Enter to exit...")
+        lines = [f"[!] Error: {installation_file} not found in latest release assets!"]
+        print_frame("ERROR", lines, Colors.RED, 'double')
+        input("Press Enter to exit...")
         return
     
     # Prepare paths
@@ -279,17 +312,29 @@ def main():
     download_path = script_dir / installation_file
     extract_dir = script_dir / "Image-Tea"
     
-    # Confirmation prompt (boxed)
-    lines = [f"> Download: {installation_file}", f"> Extract to: {extract_dir}"]
-    print_multiline_box("INSTALLATION WILL:", lines, Colors.YELLOW)
+# Confirmation prompt (frame contains only the plan; prompt is outside)
+    lines = [
+        f"> Download: {installation_file}",
+        f"> Extract to: {extract_dir}"
+    ]
+    print_frame("INSTALLATION PLAN", lines, Colors.YELLOW, 'double')
 
-    print(f"{Colors.BOLD}Proceed with installation? [{Colors.GREEN}Y{Colors.RESET}{Colors.BOLD}/{Colors.RED}n{Colors.RESET}{Colors.BOLD}]:{Colors.RESET} ", end='', flush=True)
+    # Prompt outside frame, accept Y/N (uppercase shown) — instant keypress
+    while True:
+        print(f"{Colors.BOLD}Proceed with installation? [{Colors.GREEN}Y{Colors.RESET}/{Colors.RED}N{Colors.RESET}]: {Colors.RESET}", end='', flush=True)
+        response = getch()
+        print(response)
+        if response in ['y', 'Y', '\r', '\n', '']:
+            proceed = True
+            break
+        if response in ['n', 'N']:
+            proceed = False
+            break
+        # ignore other keys and loop again
 
-    response = getch()
-    print(response)  # Echo the character
-
-    if response not in ['y', 'Y', '\r', '\n', '']:
-        print(f"\n{Colors.RED}[!] Installation cancelled by user.{Colors.RESET}")
+    if not proceed:
+        lines = ["Installation cancelled by user."]
+        print_frame("CANCELLED", lines, Colors.RED, 'double')
         return
     
     # Create extract directory if it doesn't exist
@@ -297,26 +342,32 @@ def main():
     
     # Download the file
     if not download_file(download_url, download_path):
-        input("\nPress Enter to exit...")
+        input("Press Enter to exit...")
         return
     
     # Extract the file
     if not extract_zip(download_path, extract_dir):
-        input("\nPress Enter to exit...")
+        input("Press Enter to exit...")
         return
     
     # Remove the zip file after successful extraction
-    print_section("CLEANING UP")
+    lines = []
     try:
         if download_path.exists():
             download_path.unlink()
-            print(f"{Colors.GREEN}[+] Removed: {Colors.WHITE}{download_path.name}{Colors.RESET}")
+            lines.append(f"[+] Removed: {download_path.name}")
     except Exception as e:
-        print(f"{Colors.YELLOW}[!] Warning: Could not remove archive: {e}{Colors.RESET}")
+        lines.append(f"[!] Warning: Could not remove archive: {e}")
+    
+    print_frame("CLEANING UP", lines, Colors.YELLOW, 'single')
     
     # Success message
-    print_box("INSTALLATION COMPLETED!", Colors.GREEN)
-    print(f"{Colors.CYAN}Application installed to:{Colors.RESET} {Colors.WHITE}{extract_dir.absolute()}{Colors.RESET}\n")
+    lines = [
+        "INSTALLATION COMPLETED!",
+        "",
+        f"Application installed to: {extract_dir.absolute()}"
+    ]
+    print_frame("SUCCESS", lines, Colors.GREEN, 'double')
     
     input(f"{Colors.DIM}Press Enter to exit...{Colors.RESET}")
 
@@ -325,8 +376,10 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.RED}[!] Installation cancelled by user.{Colors.RESET}")
-        input(f"\n{Colors.DIM}Press Enter to exit...{Colors.RESET}")
+        lines = ["Installation cancelled by user."]
+        print_frame("CANCELLED", lines, Colors.RED, 'double')
+        input(f"{Colors.DIM}Press Enter to exit...{Colors.RESET}")
     except Exception as e:
-        print(f"\n\n{Colors.RED}[!] An error occurred: {e}{Colors.RESET}")
-        input(f"\n{Colors.DIM}Press Enter to exit...{Colors.RESET}")
+        lines = [f"An error occurred: {e}"]
+        print_frame("ERROR", lines, Colors.RED, 'double')
+        input(f"{Colors.DIM}Press Enter to exit...{Colors.RESET}")
