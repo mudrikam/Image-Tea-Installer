@@ -389,8 +389,22 @@ def main():
     # Prepare paths early for detection
     # When running as PyInstaller executable, use the exe location, not __file__ (which points to temp)
     if getattr(sys, 'frozen', False):
-        # Running as compiled executable - use executable's directory
-        script_dir = Path(sys.executable).parent
+        # Running as compiled executable
+        # Special handling for Linux AppImage: use APPIMAGE env var to get the real path
+        appimage_path = os.environ.get('APPIMAGE')
+        if appimage_path:
+            # Running from AppImage - use the directory containing the .AppImage file
+            script_dir = Path(appimage_path).parent
+        elif sys.platform == 'darwin' and '.app/Contents/MacOS' in str(sys.executable):
+            # Running from macOS .app bundle - use the directory containing the .app
+            # sys.executable is like: /path/to/Image Tea Installer.app/Contents/MacOS/Image Tea Installer
+            # We want: /path/to/
+            app_bundle = Path(sys.executable)
+            # Go up from MacOS -> Contents -> .app -> parent directory
+            script_dir = app_bundle.parent.parent.parent
+        else:
+            # Running as regular executable (Windows .exe) - use executable's directory
+            script_dir = Path(sys.executable).parent
     else:
         # Running as normal Python script
         script_dir = Path(__file__).parent
