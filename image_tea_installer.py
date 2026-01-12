@@ -3,6 +3,7 @@ import json
 import zipfile
 import urllib.request
 import urllib.error
+import ssl
 import shutil
 import tempfile
 import sys
@@ -165,10 +166,18 @@ def get_latest_release(repo_url):
     api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     
     try:
-        with urllib.request.urlopen(api_url) as response:
+        # Create SSL context that doesn't verify certificates (for environments with SSL issues)
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        
+        with urllib.request.urlopen(api_url, context=ssl_context) as response:
             return json.loads(response.read().decode())
     except urllib.error.HTTPError as e:
         print(f"Error fetching latest release: {e}")
+        raise
+    except Exception as e:
+        print(f"Error: {e}")
         raise
 
 
@@ -182,6 +191,11 @@ def download_file(url, destination):
     print_frame("DOWNLOADING", lines, Colors.YELLOW, 'single')
     
     try:
+        # Create SSL context that doesn't verify certificates
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        
         def progress_hook(block_num, block_size, total_size):
             if total_size > 0:
                 downloaded = block_num * block_size
@@ -197,6 +211,10 @@ def download_file(url, destination):
                 
                 if downloaded >= total_size:
                     print()
+        
+        # Create opener with SSL context
+        opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl_context))
+        urllib.request.install_opener(opener)
         
         urllib.request.urlretrieve(url, destination, progress_hook)
         # Show completion inside a small frame
