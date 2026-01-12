@@ -1,10 +1,8 @@
 name: Build Image Tea Installer
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  release:
+    types: [ published ]
   workflow_dispatch:
 
 jobs:
@@ -32,6 +30,14 @@ jobs:
           path: dist/Image_Tea_Installer.exe
           if-no-files-found: error
 
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/Image_Tea_Installer.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build-macos:
     runs-on: macos-latest
     steps:
@@ -46,25 +52,28 @@ jobs:
       - name: Install PyInstaller
         run: pip install pyinstaller
 
-      - name: Build macOS .app bundle
+      - name: Build macOS executable
         run: |
-          pyinstaller --windowed --onedir --noupx \
+          pyinstaller --onefile --noupx \
             --icon=image_tea.icns \
             --add-data "installer_configs.json:." \
-            --name="Image Tea Installer" \
+            --name=Image_Tea_Installer \
             image_tea_installer.py
-
-      - name: Create DMG (optional, or just zip the .app)
-        run: |
-          cd dist
-          zip -r "Image_Tea_Installer.app.zip" "Image Tea Installer.app"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: Image-Tea-Installer-macOS
-          path: dist/Image_Tea_Installer.app.zip
+          path: dist/Image_Tea_Installer
           if-no-files-found: error
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/Image_Tea_Installer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-linux:
     runs-on: ubuntu-latest
@@ -147,3 +156,11 @@ jobs:
           name: Image-Tea-Installer-Linux
           path: Image_Tea_Installer-x86_64.AppImage
           if-no-files-found: error
+
+      - name: Upload to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Image_Tea_Installer-x86_64.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
