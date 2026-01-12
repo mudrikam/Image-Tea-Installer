@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows:
-      - Update 'latest' Tag
+      - "Update 'latest' Tag"
     types:
       - completed
 
