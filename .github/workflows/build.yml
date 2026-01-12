@@ -5,8 +5,10 @@ on:
     types: [ published, edited ]
   workflow_dispatch:
   workflow_run:
-    workflows: ["Update 'latest' Tag"]
-    types: [completed]
+    workflows:
+      - "Update 'latest' Tag"
+    types:
+      - completed
 
 permissions:
   contents: write
