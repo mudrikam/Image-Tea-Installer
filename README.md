@@ -21,7 +21,13 @@ Installer sederhana untuk Image Tea (Windows, macOS, Linux).
 1. Unduh installer sesuai sistem operasi kamu dari tabel di atas.
 2. Jalankan installer:
    - **Windows:** klik dua kali `Image_Tea_Installer.exe`.
-   - **macOS:** unzip lalu klik dua kali `Image Tea Installer.app` (jika diblokir, klik kanan → Open).
+  - **macOS:** buka Terminal, lalu jalankan:
+
+      ```bash
+      chmod +x Image_Tea_Installer
+      ./Image_Tea_Installer
+      ```
+    Jika diblokir, buka System Preferences → Security & Privacy → Open Anyway.
    - **Linux:** buka terminal, lalu:
 
         ```bash
@@ -53,7 +59,7 @@ Installer sederhana untuk Image Tea (Windows, macOS, Linux).
 - Jika menjalankan dari AppImage atau `.app`, file akan dibuat di folder yang sama dengan installer (bukan di `/tmp`).
 - Jika gagal download atau ekstrak, coba jalankan ulang installer dari folder tempat file installer berada.
 - **Khusus macOS:**
-  - Jika aplikasi tidak bisa dibuka karena muncul pesan "tidak aman" atau "tidak dikenali", klik kanan pada `Image Tea Installer.app` lalu pilih **Open**. Biasanya akan muncul opsi untuk tetap membuka aplikasi.
+  - Jika installer tidak bisa dibuka karena muncul pesan "tidak aman" atau "tidak dikenali", buka System Preferences → Security & Privacy, lalu klik **Open Anyway** untuk `Image_Tea_Installer`.
   - Jika tetap tidak bisa dijalankan, kamu bisa menggunakan git untuk clone repo Image Tea secara manual:
 
     ```bash

@@ -19,7 +19,13 @@ A simple installer for Image Tea (Windows, macOS, Linux).
 1. Download the installer for your operating system from the table above.
 2. Run the installer:
    - **Windows:** Double-click `Image_Tea_Installer.exe`.
-   - **macOS:** Unzip, then double-click `Image Tea Installer.app` (if blocked, right-click → Open).
+  - **macOS:** Open Terminal, then run:
+
+      ```bash
+      chmod +x Image_Tea_Installer
+      ./Image_Tea_Installer
+      ```
+    If blocked by security, open System Preferences → Security & Privacy → Open Anyway.
    - **Linux:** Open terminal, then:
 
         ```bash
@@ -51,7 +57,7 @@ A simple installer for Image Tea (Windows, macOS, Linux).
 - If running from AppImage or `.app`, files will be created in the same folder as the installer (not in `/tmp`).
 - If download or extraction fails, try running the installer again from the folder where the installer is located.
 - **macOS only:**
-  - If the app can't be opened due to "untrusted" or "not recognized" warning, right-click `Image Tea Installer.app` and choose **Open**. Usually, you'll get an option to open anyway.
+  - If the installer can't be opened due to "untrusted" or "not recognized" warning, open System Preferences → Security & Privacy, then click **Open Anyway** for `Image_Tea_Installer`.
   - If it still can't be opened, you can use git to clone the Image Tea repo manually:
 
     ```bash
