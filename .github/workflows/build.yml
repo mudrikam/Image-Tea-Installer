@@ -38,8 +38,16 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/Image_Tea_Installer.exe
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: Image-Tea-Installer-Windows
+          failOnError: false
 
   build-macos:
     runs-on: macos-latest
@@ -75,8 +83,16 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: dist/Image_Tea_Installer
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: Image-Tea-Installer-macOS
+          failOnError: false
 
   build-linux:
     runs-on: ubuntu-latest
@@ -165,5 +181,13 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: Image_Tea_Installer-x86_64.AppImage
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: Image-Tea-Installer-Linux
+          failOnError: false
