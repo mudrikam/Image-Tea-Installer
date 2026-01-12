@@ -4,16 +4,26 @@ on:
   release:
     types: [ published, edited ]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Update 'latest' Tag"]
+    types: [completed]
 
 permissions:
   contents: write
 
 jobs:
   build-windows:
+    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Checkout `latest` tag when triggered by Update 'latest' Tag
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' }}
+        run: |
+          git fetch origin tag latest --depth=1 || true
+          git checkout tags/latest || true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,11 +44,11 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to Release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/Image_Tea_Installer.exe
-          tag_name: ${{ github.event.release.tag_name }}
+          tag_name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' && 'latest' || github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -50,10 +60,17 @@ jobs:
           failOnError: false
 
   build-macos:
+    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Checkout `latest` tag when triggered by Update 'latest' Tag
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' }}
+        run: |
+          git fetch origin tag latest --depth=1 || true
+          git checkout tags/latest || true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -79,11 +96,11 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to Release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/Image_Tea_Installer
-          tag_name: ${{ github.event.release.tag_name }}
+          tag_name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' && 'latest' || github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -95,10 +112,17 @@ jobs:
           failOnError: false
 
   build-linux:
+    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Checkout `latest` tag when triggered by Update 'latest' Tag
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' }}
+        run: |
+          git fetch origin tag latest --depth=1 || true
+          git checkout tags/latest || true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -177,11 +201,11 @@ jobs:
           if-no-files-found: error
 
       - name: Upload to Release
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success')
         uses: softprops/action-gh-release@v2
         with:
           files: Image_Tea_Installer-x86_64.AppImage
-          tag_name: ${{ github.event.release.tag_name }}
+          tag_name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == "Update 'latest' Tag" && github.event.workflow_run.conclusion == 'success' && 'latest' || github.event.release.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
