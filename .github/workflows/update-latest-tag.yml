@@ -69,3 +69,14 @@ jobs:
               await github.rest.git.createRef({ owner, repo, ref: 'refs/tags/latest', sha });
               console.log('Created refs/tags/latest');
             }
+
+            // Confirm the refs/tags/latest points to the expected SHA and print hash
+            try {
+              const latestRef = await github.rest.git.getRef({ owner, repo, ref: 'tags/latest' });
+              const latestSha = latestRef.data.object.sha;
+              console.log(`Resolved SHA: ${sha}`);
+              console.log(`refs/tags/latest now points to: ${latestSha}`);
+              console.log(`refs/tags/latest short: ${latestSha.substring(0,7)}`);
+            } catch (err) {
+              console.log('Warning: failed to fetch refs/tags/latest after update:', err.message);
+            }
