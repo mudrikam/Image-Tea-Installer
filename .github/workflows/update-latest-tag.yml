@@ -119,6 +119,8 @@ jobs:
                   // If not found, create a release with tag 'latest' (assets should be uploaded by the build job)
                   const createResp = await octokit.rest.repos.createRelease({ owner, repo, tag_name: 'latest', name: 'latest', body: `**latest tag commit:** ${sha} (short: ${sha.substring(0,7)})`, draft: false, prerelease: false, target_commitish: sha });
                   console.log(`Created release for tag 'latest' id=${createResp.data.id} (via octokit)`);
+                }
+              } catch (err) {
                 console.log('Warning: failed to update/create release for tag latest:', err.message);
               }
 
