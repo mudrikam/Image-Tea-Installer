@@ -13,9 +13,9 @@ Installer sederhana untuk Image Tea (Windows, macOS, Linux).
 
 | Sistem Operasi | Unduh |
 |----------------|---------|
-| ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white&style=for-the-badge) | [Unduh Image_Tea_Installer.exe](URL-WINDOWS) |
-| ![macOS](https://img.shields.io/badge/macOS-DEDEDE?logo=apple&logoColor=666666&style=for-the-badge) | [Unduh Image_Tea_Installer.app.zip](URL-MACOS) |
-| ![Linux](https://custom-icon-badges.demolab.com/badge/Linux-FCC624?logo=linux&logoColor=black&style=for-the-badge) | [Unduh Image_Tea_Installer-x86_64.AppImage](URL-LINUX) |
+| ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white&style=for-the-badge) | [Unduh Image_Tea_Installer.exe](https://github.com/mudrikam/Image-Tea-Installer/releases/download/latest/Image_Tea_Installer.exe) |
+| ![macOS](https://img.shields.io/badge/macOS-DEDEDE?logo=apple&logoColor=666666&style=for-the-badge) | [Unduh Image_Tea_Installer](https://github.com/mudrikam/Image-Tea-Installer/releases/download/latest/Image_Tea_Installer) |
+| ![Linux](https://custom-icon-badges.demolab.com/badge/Linux-FCC624?logo=linux&logoColor=black&style=for-the-badge) | [Unduh Image_Tea_Installer-x86_64.AppImage](https://github.com/mudrikam/Image-Tea-Installer/releases/download/latest/Image_Tea_Installer-x86_64.AppImage) |
 
 ## Cara Cepat
 1. Unduh installer sesuai sistem operasi kamu dari tabel di atas.

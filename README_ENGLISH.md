@@ -11,9 +11,9 @@ A simple installer for Image Tea (Windows, macOS, Linux).
 
 | Operating System | Download |
 |------------------|---------|
-| ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white&style=for-the-badge) | [Download Image_Tea_Installer.exe](URL-WINDOWS) |
-| ![macOS](https://img.shields.io/badge/macOS-DEDEDE?logo=apple&logoColor=666666&style=for-the-badge) | [Download Image_Tea_Installer.app.zip](URL-MACOS) |
-| ![Linux](https://custom-icon-badges.demolab.com/badge/Linux-FCC624?logo=linux&logoColor=black&style=for-the-badge) | [Download Image_Tea_Installer-x86_64.AppImage](URL-LINUX) |
+| ![Windows](https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white&style=for-the-badge) | [Download Image_Tea_Installer.exe](https://github.com/mudrikam/Image-Tea-Installer/releases/download/latest/Image_Tea_Installer.exe) |
+| ![macOS](https://img.shields.io/badge/macOS-DEDEDE?logo=apple&logoColor=666666&style=for-the-badge) | [Download Image_Tea_Installer](https://github.com/mudrikam/Image-Tea-Installer/releases/download/latest/Image_Tea_Installer) |
+| ![Linux](https://custom-icon-badges.demolab.com/badge/Linux-FCC624?logo=linux&logoColor=black&style=for-the-badge) | [Download Image_Tea_Installer-x86_64.AppImage](https://github.com/mudrikam/Image-Tea-Installer/releases/download/latest/Image_Tea_Installer-x86_64.AppImage) |
 
 ## Quick Start
 1. Download the installer for your operating system from the table above.
